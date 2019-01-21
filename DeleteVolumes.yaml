@@ -1,0 +1,19 @@
+---
+schemaVersion: '0.3'
+description: Select the volume ids that you want to delete. This document will delete the volume.
+assumeRole: "{{ AutomationAssumeRole }}"
+parameters:
+  VolumeId:
+    type: String
+    description: "(Required) Volume(s) to delete"
+  AutomationAssumeRole:
+    type: String
+    description: "(Optional) The ARN of the role that allows Automation to perform the actions on your behalf."
+    default: ""
+mainSteps:
+- name: deleteVolumes
+  action: aws:executeAwsApi
+  inputs:
+    Service: ec2
+    Api: DeleteVolume
+    VolumeId: "{{ VolumeId }}"

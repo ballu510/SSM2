@@ -1,0 +1,42 @@
+---
+schemaVersion: '0.3'
+description: Select the volume ids that you want to delete. This document will create a snapshot of the volume before deleting it.
+assumeRole: "{{ AutomationAssumeRole }}"
+parameters:
+  VolumeId:
+    type: String
+    description: "(Required) delete Volume(s)"
+  AutomationAssumeRole:
+    type: String
+    description: "(Optional) The ARN of the role that allows Automation to perform the actions on your behalf."
+    default: ""
+mainSteps:
+- name: createSnapshot
+  action: aws:executeAwsApi
+  inputs:
+    Service: ec2
+    Api: CreateSnapshot
+    VolumeId: "{{ VolumeId }}"
+    Description: "Snapshot of  {{ VolumeId }} "
+  outputs:
+  - Name: SnapshotId
+    Selector: SnapshotId
+    Type: String
+- name: verifySnapshot
+  action: aws:waitForAwsResourceProperty
+  timeoutSeconds: 600
+  inputs:
+    Service: ec2
+    Api: DescribeSnapshots
+    SnapshotIds: ["{{createSnapshot.SnapshotId}}"]
+    PropertySelector: Snapshots[0].State
+    DesiredValues:
+    - completed
+- name: deleteVolumes
+  action: aws:executeAwsApi
+  inputs:
+    Service: ec2
+    Api: DeleteVolume
+    VolumeId: "{{ VolumeId }}"
+outputs:
+- createSnapshot.SnapshotId
